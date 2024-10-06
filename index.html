@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AlphaBot Raffle Joiner</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #f4f4f9;
+        }
+
+        .container {
+            max-width: 500px;
+            width: 100%;
+            padding: 20px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            font-size: 24px;
+            margin-bottom: 20px;
+        }
+
+        input[type="text"] {
+            width: calc(100% - 22px);
+            padding: 10px;
+            margin-bottom: 10px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+        }
+
+        button {
+            padding: 10px 20px;
+            background-color: #007BFF;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            width: 100%;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        button:disabled {
+            background-color: #6c757d;
+            cursor: not-allowed;
+        }
+
+        #log {
+            width: 100%;
+            height: 300px;
+            margin-top: 20px;
+            padding: 10px;
+            background-color: #1e1e1e; /* Terminal-like background */
+            border: 1px solid #333;
+            border-radius: 5px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            font-family: 'Courier New', Courier, monospace; /* Monospace font */
+            font-size: 14px;
+            color: #dcdcdc; /* Default terminal text color */
+        }
+
+        .green {
+            color: #00ff00; /* Green for success */
+        }
+
+        .red {
+            color: #ff0000; /* Red for errors */
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>AlphaBot Raffle Joiner</h1>
+        <input type="text" id="apiKey" placeholder="Enter your AlphaBot API Key">
+        <button onclick="joinRaffles()">GO</button>
+        <div id="log"></div> <!-- Terminal-like log -->
+    </div>
+
+    <script>
+        async function joinRaffles() {
+            const apiKey = document.getElementById('apiKey').value;
+            const button = document.querySelector('button');
+            
+            if (!apiKey) {
+                log('Please enter your API key.', 'error');
+                return;
+            }
+
+            log('Fetching raffles...');
+            button.disabled = true;  // Disable the button during the request
+
+            try {
+                const response = await fetch('/join-raffles', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ apiKey: apiKey })
+                });
+
+                const result = await response.json();
+                if (response.ok) {
+                    result.message.forEach((msg) => {
+                        if (msg.includes('Successfully')) {
+                            log(msg, 'success'); // Success messages in green
+                        } else {
+                            log(msg, 'error'); // Failure messages in red
+                        }
+                    });
+                } else {
+                    log('Server Error: ' + result.error, 'error');
+                }
+            } catch (error) {
+                log('Request failed: ' + error.message, 'error');
+            } finally {
+                button.disabled = false;  // Re-enable the button after the request
+            }
+        }
+
+        function log(message, type = 'info') {
+            const logArea = document.getElementById('log');
+            const logMessage = document.createElement('div');
+
+            if (type === 'success') {
+                logMessage.className = 'green';  // Success messages in green
+            } else if (type === 'error') {
+                logMessage.className = 'red';    // Error messages in red
+            } else {
+                logMessage.style.color = '#dcdcdc'; // Regular log text color
+            }
+
+            logMessage.textContent = `➜ ${message}`;
+            logArea.appendChild(logMessage);
+            logArea.scrollTop = logArea.scrollHeight; // Auto scroll to the bottom
+        }
+    </script>
+</body>
+</html>
